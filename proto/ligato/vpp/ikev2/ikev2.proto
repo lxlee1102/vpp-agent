@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package ligato.vpp.ikev2;
+
+option go_package = "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2;vpp_ikev2";
+
+import "ligato/annotations.proto";
+
+enum AuthMethod { // vpp/src/plugins/ikev2/ikev2.h
+    NONE_AUTHM = 0;
+    RSA_SIG = 1;
+    SHARED_KEY_MIC = 2;
+}
+
+enum IDType  {
+    NONE_IDTYPE = 0;
+    ID_IPV4_ADDR = 1;       /* ip4-addr */
+    ID_FQDN = 2;            /* fqdn  */
+    ID_RFC822_ADDR = 3;     /* rfc822 */
+    ID_IPV6_ADDR = 5;       /* ip6-addr */
+    ID_DER_ASN1_DN =9;      /* der-asn1-dn" */
+    ID_DER_ASN1_GN = 10;    /* der-asn1-gn */
+    ID_KEY_ID = 11;         /* key-id */
+ }
+
+message Profile {
+    // Profile id
+    string id = 1;
+
+    message Auth {
+        AuthMethod method = 1;
+        string data = 2;
+    }
+    repeated Auth auth = 2;
+
+    string local_id = 3;
+    IDType local_id_type = 4;
+    string remote_id = 5;
+    IDType remote_id_type = 6;
+
+    bool  udp_encap = 7;
+
+    message TrafficSelector {
+        string local_addr_start = 1  [(ligato_options).type = IP];
+        string local_addr_stop = 2  [(ligato_options).type = IP];
+        string remote_addr_start = 3  [(ligato_options).type = IP];
+        string remote_addr_stop = 4  [(ligato_options).type = IP];
+
+        uint32 local_port_start = 5  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
+        uint32 local_port_stop = 6  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
+        uint32 remote_port_start = 7  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
+        uint32 remote_port_stop = 8  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
+
+        uint32 protocol = 9;
+    }
+
+    repeated TrafficSelector traffic_selector = 10;
+}

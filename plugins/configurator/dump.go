@@ -25,6 +25,7 @@ import (
 	abfvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/abfplugin/vppcalls"
 	aclvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/aclplugin/vppcalls"
 	ifvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/ifplugin/vppcalls"
+	ikev2vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/ikev2plugin/vppcalls"
 	ipsecvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/ipsecplugin/vppcalls"
 	l2vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/l2plugin/vppcalls"
 	l3vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/l3plugin/vppcalls"
@@ -36,6 +37,7 @@ import (
 	linux_l3 "go.ligato.io/vpp-agent/v3/proto/ligato/linux/l3"
 	vpp_abf "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/abf"
 	vpp_acl "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/acl"
+	vpp_ikev2 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2"
 	vpp_interfaces "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/interfaces"
 	vpp_ipsec "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ipsec"
 	vpp_l2 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/l2"
@@ -54,11 +56,12 @@ type dumpService struct {
 	l3Handler    l3vppcalls.L3VppAPI
 	ipsecHandler ipsecvppcalls.IPSecVPPRead
 	// plugins
-	aclHandler  aclvppcalls.ACLVppRead
-	abfHandler  abfvppcalls.ABFVppRead
-	natHandler  natvppcalls.NatVppRead
-	puntHandler vppcalls.PuntVPPRead
+	aclHandler       aclvppcalls.ACLVppRead
+	abfHandler       abfvppcalls.ABFVppRead
+	natHandler       natvppcalls.NatVppRead
+	puntHandler      vppcalls.PuntVPPRead
 	wireguardHandler wireguardvppcalls.WgVppRead
+	ikev2Handler     ikev2vppcalls.Ikev2VppRead
 
 	// Linux handlers
 	linuxIfHandler iflinuxcalls.NetlinkAPIRead
@@ -166,6 +169,11 @@ func (svc *dumpService) Dump(ctx context.Context, req *rpc.DumpRequest) (*rpc.Du
 	dump.VppConfig.WgPeers, err = svc.DumpWgPeers()
 	if err != nil {
 		svc.log.Errorf("DumpWgPeers failed: %v", err)
+		return nil, err
+	}
+	dump.VppConfig.Ikev2Profile, err = svc.DumpIkev2Profile()
+	if err != nil {
+		svc.log.Errorf("DumpIkev2Profile failed: %v", err)
 		return nil, err
 	}
 
@@ -486,6 +494,21 @@ func (svc *dumpService) DumpWgPeers() (peers []*vpp_wg.Peer, err error) {
 		peers = append(peers, peer)
 	}
 	return
+}
+
+func (svc *dumpService) DumpIkev2Profile() (profiles []*vpp_ikev2.Profile, err error) {
+	if svc.ikev2Handler == nil {
+		// handler is not available
+		return nil, nil
+	}
+
+	dump, err := svc.ikev2Handler.DumpIkev2Profile()
+	if err != nil {
+		return nil, err
+	}
+	//profiles = append(profiles, dump...)
+
+	return dump, nil
 }
 
 // DumpLinuxInterfaces reads linux interfaces and returns them as an *LinuxInterfaceResponse. If reading ends up with error,

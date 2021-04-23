@@ -32,6 +32,7 @@ import (
 	aclvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/aclplugin/vppcalls"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/ifplugin"
 	ifvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/ifplugin/vppcalls"
+	ikev2vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/ikev2plugin/vppcalls"
 	ipsecvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/ipsecplugin/vppcalls"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/l2plugin"
 	l2vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/l2plugin/vppcalls"
@@ -175,6 +176,10 @@ func (p *Plugin) initHandlers() (err error) {
 	p.configurator.wireguardHandler = wireguardvppcalls.CompatibleWgVppHandler(p.VPP, ifIndexes, p.Log)
 	if p.configurator.wireguardHandler == nil {
 		p.Log.Info("VPP Wg handler is not available, it will be skipped")
+	}
+	p.configurator.ikev2Handler = ikev2vppcalls.CompatibleIkev2VppHandler(p.VPP, ifIndexes, p.Log)
+	if p.configurator.ikev2Handler == nil {
+		p.Log.Info("VPP ikev2 handler is not available, it will be skipped")
 	}
 
 	// Linux handlers

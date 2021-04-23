@@ -17,6 +17,7 @@ package vpp
 import (
 	vpp_abf "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/abf"
 	vpp_acl "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/acl"
+	vpp_ikev2 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2"
 	vpp_interfaces "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/interfaces"
 	vpp_ipsec "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ipsec"
 	vpp_l2 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/l2"
@@ -78,4 +79,7 @@ type (
 
 	// Wireguard
 	WgPeer = vpp_wg.Peer
+
+	// Ikev2
+	Ikev2Profile = vpp_ikev2.Profile
 )
