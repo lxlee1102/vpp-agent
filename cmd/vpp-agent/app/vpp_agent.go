@@ -43,6 +43,7 @@ import (
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/aclplugin"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/dnsplugin"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/ifplugin"
+	"go.ligato.io/vpp-agent/v3/plugins/vpp/ikev2plugin"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/ipfixplugin"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/ipsecplugin"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/l2plugin"
@@ -188,6 +189,7 @@ type VPP struct {
 	STNPlugin   *stnplugin.STNPlugin
 	SRPlugin    *srplugin.SRPlugin
 	WgPlugin    *wireguardplugin.WgPlugin
+	Ikev2Plugin *ikev2plugin.Ikev2Plugin
 }
 
 func DefaultVPP() VPP {
@@ -205,6 +207,7 @@ func DefaultVPP() VPP {
 		STNPlugin:   &stnplugin.DefaultPlugin,
 		SRPlugin:    &srplugin.DefaultPlugin,
 		WgPlugin:    &wireguardplugin.DefaultPlugin,
+		Ikev2Plugin: &ikev2plugin.DefaultPlugin,
 	}
 }
 
