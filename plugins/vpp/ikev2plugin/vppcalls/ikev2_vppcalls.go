@@ -26,12 +26,10 @@ import (
 type Ikev2VppAPI interface {
 	Ikev2VppRead
 
-	// Set peer via binary API
+	// Set profile via binary API
 	AddProfile(prof *ik.Profile) error
-	//AddPeer(peer *wg.Peer) (uint32, error)
 	// Remove profile via binary API
 	RemoveProfile(profile_id string) error
-	//RemovePeer(peer_idx uint32) error
 }
 
 // Ikev2VPPRead provides read methods for ikev2

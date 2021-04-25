@@ -31,7 +31,7 @@ message Profile {
         AuthMethod method = 1;
         string data = 2;
     }
-    repeated Auth auth = 2;
+    Auth auth = 2;
 
     string local_id = 3;
     IDType local_id_type = 4;
@@ -54,5 +54,5 @@ message Profile {
         uint32 protocol = 9;
     }
 
-    repeated TrafficSelector traffic_selector = 10;
+    TrafficSelector traffic_selector = 10;
 }

@@ -80,6 +80,7 @@ var backwardCompatibleNames = map[string]names{
 	"vppConfig.Policy":                 names{protoName: "srv6_policies", jsonName: "srv6Policies"},
 	"vppConfig.Steering":               names{protoName: "srv6_steerings", jsonName: "srv6Steerings"},
 	"vppConfig.SRv6Global":             names{protoName: "srv6_global", jsonName: "srv6Global"},
+	"vppConfig.Profile":                names{protoName: "ikev2_profiles", jsonName: "ikev2Profiles"},
 }
 
 // NewDynamicConfig creates dynamically proto Message that contains all given configuration models(knowModels).

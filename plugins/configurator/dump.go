@@ -171,7 +171,7 @@ func (svc *dumpService) Dump(ctx context.Context, req *rpc.DumpRequest) (*rpc.Du
 		svc.log.Errorf("DumpWgPeers failed: %v", err)
 		return nil, err
 	}
-	dump.VppConfig.Ikev2Profile, err = svc.DumpIkev2Profile()
+	dump.VppConfig.Ikev2Profiles, err = svc.DumpIkev2Profile()
 	if err != nil {
 		svc.log.Errorf("DumpIkev2Profile failed: %v", err)
 		return nil, err
