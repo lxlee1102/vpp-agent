@@ -10,44 +10,44 @@ import (
 
 ////////// type-safe key-value pair with metadata //////////
 
-type ProfileKVWithMetadata struct {
+type Ikev2ProfileKVWithMetadata struct {
 	Key      string
-	Value    *vpp_ikev2.Profile
+	Value    *vpp_ikev2.Ikev2Profile
 	Metadata interface{}
 	Origin   ValueOrigin
 }
 
 ////////// type-safe Descriptor structure //////////
 
-type ProfileDescriptor struct {
+type Ikev2ProfileDescriptor struct {
 	Name                 string
 	KeySelector          KeySelector
 	ValueTypeName        string
 	KeyLabel             func(key string) string
-	ValueComparator      func(key string, oldValue, newValue *vpp_ikev2.Profile) bool
+	ValueComparator      func(key string, oldValue, newValue *vpp_ikev2.Ikev2Profile) bool
 	NBKeyPrefix          string
 	WithMetadata         bool
 	MetadataMapFactory   MetadataMapFactory
-	Validate             func(key string, value *vpp_ikev2.Profile) error
-	Create               func(key string, value *vpp_ikev2.Profile) (metadata interface{}, err error)
-	Delete               func(key string, value *vpp_ikev2.Profile, metadata interface{}) error
-	Update               func(key string, oldValue, newValue *vpp_ikev2.Profile, oldMetadata interface{}) (newMetadata interface{}, err error)
-	UpdateWithRecreate   func(key string, oldValue, newValue *vpp_ikev2.Profile, metadata interface{}) bool
-	Retrieve             func(correlate []ProfileKVWithMetadata) ([]ProfileKVWithMetadata, error)
+	Validate             func(key string, value *vpp_ikev2.Ikev2Profile) error
+	Create               func(key string, value *vpp_ikev2.Ikev2Profile) (metadata interface{}, err error)
+	Delete               func(key string, value *vpp_ikev2.Ikev2Profile, metadata interface{}) error
+	Update               func(key string, oldValue, newValue *vpp_ikev2.Ikev2Profile, oldMetadata interface{}) (newMetadata interface{}, err error)
+	UpdateWithRecreate   func(key string, oldValue, newValue *vpp_ikev2.Ikev2Profile, metadata interface{}) bool
+	Retrieve             func(correlate []Ikev2ProfileKVWithMetadata) ([]Ikev2ProfileKVWithMetadata, error)
 	IsRetriableFailure   func(err error) bool
-	DerivedValues        func(key string, value *vpp_ikev2.Profile) []KeyValuePair
-	Dependencies         func(key string, value *vpp_ikev2.Profile) []Dependency
+	DerivedValues        func(key string, value *vpp_ikev2.Ikev2Profile) []KeyValuePair
+	Dependencies         func(key string, value *vpp_ikev2.Ikev2Profile) []Dependency
 	RetrieveDependencies []string /* descriptor name */
 }
 
 ////////// Descriptor adapter //////////
 
-type ProfileDescriptorAdapter struct {
-	descriptor *ProfileDescriptor
+type Ikev2ProfileDescriptorAdapter struct {
+	descriptor *Ikev2ProfileDescriptor
 }
 
-func NewProfileDescriptor(typedDescriptor *ProfileDescriptor) *KVDescriptor {
-	adapter := &ProfileDescriptorAdapter{descriptor: typedDescriptor}
+func NewIkev2ProfileDescriptor(typedDescriptor *Ikev2ProfileDescriptor) *KVDescriptor {
+	adapter := &Ikev2ProfileDescriptorAdapter{descriptor: typedDescriptor}
 	descriptor := &KVDescriptor{
 		Name:                 typedDescriptor.Name,
 		KeySelector:          typedDescriptor.KeySelector,
@@ -89,88 +89,88 @@ func NewProfileDescriptor(typedDescriptor *ProfileDescriptor) *KVDescriptor {
 	return descriptor
 }
 
-func (da *ProfileDescriptorAdapter) ValueComparator(key string, oldValue, newValue proto.Message) bool {
-	typedOldValue, err1 := castProfileValue(key, oldValue)
-	typedNewValue, err2 := castProfileValue(key, newValue)
+func (da *Ikev2ProfileDescriptorAdapter) ValueComparator(key string, oldValue, newValue proto.Message) bool {
+	typedOldValue, err1 := castIkev2ProfileValue(key, oldValue)
+	typedNewValue, err2 := castIkev2ProfileValue(key, newValue)
 	if err1 != nil || err2 != nil {
 		return false
 	}
 	return da.descriptor.ValueComparator(key, typedOldValue, typedNewValue)
 }
 
-func (da *ProfileDescriptorAdapter) Validate(key string, value proto.Message) (err error) {
-	typedValue, err := castProfileValue(key, value)
+func (da *Ikev2ProfileDescriptorAdapter) Validate(key string, value proto.Message) (err error) {
+	typedValue, err := castIkev2ProfileValue(key, value)
 	if err != nil {
 		return err
 	}
 	return da.descriptor.Validate(key, typedValue)
 }
 
-func (da *ProfileDescriptorAdapter) Create(key string, value proto.Message) (metadata Metadata, err error) {
-	typedValue, err := castProfileValue(key, value)
+func (da *Ikev2ProfileDescriptorAdapter) Create(key string, value proto.Message) (metadata Metadata, err error) {
+	typedValue, err := castIkev2ProfileValue(key, value)
 	if err != nil {
 		return nil, err
 	}
 	return da.descriptor.Create(key, typedValue)
 }
 
-func (da *ProfileDescriptorAdapter) Update(key string, oldValue, newValue proto.Message, oldMetadata Metadata) (newMetadata Metadata, err error) {
-	oldTypedValue, err := castProfileValue(key, oldValue)
+func (da *Ikev2ProfileDescriptorAdapter) Update(key string, oldValue, newValue proto.Message, oldMetadata Metadata) (newMetadata Metadata, err error) {
+	oldTypedValue, err := castIkev2ProfileValue(key, oldValue)
 	if err != nil {
 		return nil, err
 	}
-	newTypedValue, err := castProfileValue(key, newValue)
+	newTypedValue, err := castIkev2ProfileValue(key, newValue)
 	if err != nil {
 		return nil, err
 	}
-	typedOldMetadata, err := castProfileMetadata(key, oldMetadata)
+	typedOldMetadata, err := castIkev2ProfileMetadata(key, oldMetadata)
 	if err != nil {
 		return nil, err
 	}
 	return da.descriptor.Update(key, oldTypedValue, newTypedValue, typedOldMetadata)
 }
 
-func (da *ProfileDescriptorAdapter) Delete(key string, value proto.Message, metadata Metadata) error {
-	typedValue, err := castProfileValue(key, value)
+func (da *Ikev2ProfileDescriptorAdapter) Delete(key string, value proto.Message, metadata Metadata) error {
+	typedValue, err := castIkev2ProfileValue(key, value)
 	if err != nil {
 		return err
 	}
-	typedMetadata, err := castProfileMetadata(key, metadata)
+	typedMetadata, err := castIkev2ProfileMetadata(key, metadata)
 	if err != nil {
 		return err
 	}
 	return da.descriptor.Delete(key, typedValue, typedMetadata)
 }
 
-func (da *ProfileDescriptorAdapter) UpdateWithRecreate(key string, oldValue, newValue proto.Message, metadata Metadata) bool {
-	oldTypedValue, err := castProfileValue(key, oldValue)
+func (da *Ikev2ProfileDescriptorAdapter) UpdateWithRecreate(key string, oldValue, newValue proto.Message, metadata Metadata) bool {
+	oldTypedValue, err := castIkev2ProfileValue(key, oldValue)
 	if err != nil {
 		return true
 	}
-	newTypedValue, err := castProfileValue(key, newValue)
+	newTypedValue, err := castIkev2ProfileValue(key, newValue)
 	if err != nil {
 		return true
 	}
-	typedMetadata, err := castProfileMetadata(key, metadata)
+	typedMetadata, err := castIkev2ProfileMetadata(key, metadata)
 	if err != nil {
 		return true
 	}
 	return da.descriptor.UpdateWithRecreate(key, oldTypedValue, newTypedValue, typedMetadata)
 }
 
-func (da *ProfileDescriptorAdapter) Retrieve(correlate []KVWithMetadata) ([]KVWithMetadata, error) {
-	var correlateWithType []ProfileKVWithMetadata
+func (da *Ikev2ProfileDescriptorAdapter) Retrieve(correlate []KVWithMetadata) ([]KVWithMetadata, error) {
+	var correlateWithType []Ikev2ProfileKVWithMetadata
 	for _, kvpair := range correlate {
-		typedValue, err := castProfileValue(kvpair.Key, kvpair.Value)
+		typedValue, err := castIkev2ProfileValue(kvpair.Key, kvpair.Value)
 		if err != nil {
 			continue
 		}
-		typedMetadata, err := castProfileMetadata(kvpair.Key, kvpair.Metadata)
+		typedMetadata, err := castIkev2ProfileMetadata(kvpair.Key, kvpair.Metadata)
 		if err != nil {
 			continue
 		}
 		correlateWithType = append(correlateWithType,
-			ProfileKVWithMetadata{
+			Ikev2ProfileKVWithMetadata{
 				Key:      kvpair.Key,
 				Value:    typedValue,
 				Metadata: typedMetadata,
@@ -195,16 +195,16 @@ func (da *ProfileDescriptorAdapter) Retrieve(correlate []KVWithMetadata) ([]KVWi
 	return values, err
 }
 
-func (da *ProfileDescriptorAdapter) DerivedValues(key string, value proto.Message) []KeyValuePair {
-	typedValue, err := castProfileValue(key, value)
+func (da *Ikev2ProfileDescriptorAdapter) DerivedValues(key string, value proto.Message) []KeyValuePair {
+	typedValue, err := castIkev2ProfileValue(key, value)
 	if err != nil {
 		return nil
 	}
 	return da.descriptor.DerivedValues(key, typedValue)
 }
 
-func (da *ProfileDescriptorAdapter) Dependencies(key string, value proto.Message) []Dependency {
-	typedValue, err := castProfileValue(key, value)
+func (da *Ikev2ProfileDescriptorAdapter) Dependencies(key string, value proto.Message) []Dependency {
+	typedValue, err := castIkev2ProfileValue(key, value)
 	if err != nil {
 		return nil
 	}
@@ -213,15 +213,15 @@ func (da *ProfileDescriptorAdapter) Dependencies(key string, value proto.Message
 
 ////////// Helper methods //////////
 
-func castProfileValue(key string, value proto.Message) (*vpp_ikev2.Profile, error) {
-	typedValue, ok := value.(*vpp_ikev2.Profile)
+func castIkev2ProfileValue(key string, value proto.Message) (*vpp_ikev2.Ikev2Profile, error) {
+	typedValue, ok := value.(*vpp_ikev2.Ikev2Profile)
 	if !ok {
 		return nil, ErrInvalidValueType(key, value)
 	}
 	return typedValue, nil
 }
 
-func castProfileMetadata(key string, metadata Metadata) (interface{}, error) {
+func castIkev2ProfileMetadata(key string, metadata Metadata) (interface{}, error) {
 	if metadata == nil {
 		return nil, nil
 	}

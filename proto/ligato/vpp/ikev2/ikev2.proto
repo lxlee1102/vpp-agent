@@ -7,52 +7,138 @@ option go_package = "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2;vpp_ikev2"
 import "ligato/annotations.proto";
 
 enum AuthMethod { // vpp/src/plugins/ikev2/ikev2.h
-    NONE_AUTHM = 0;
-    RSA_SIG = 1;
+    NONE_AUTHM     = 0;
+    RSA_SIG        = 1;
     SHARED_KEY_MIC = 2;
 }
 
-enum IDType  {
-    NONE_IDTYPE = 0;
-    ID_IPV4_ADDR = 1;       /* ip4-addr */
-    ID_FQDN = 2;            /* fqdn  */
-    ID_RFC822_ADDR = 3;     /* rfc822 */
-    ID_IPV6_ADDR = 5;       /* ip6-addr */
-    ID_DER_ASN1_DN =9;      /* der-asn1-dn" */
-    ID_DER_ASN1_GN = 10;    /* der-asn1-gn */
-    ID_KEY_ID = 11;         /* key-id */
+enum IDType { // vpp/src/plugins/ikev2/ikev2.h
+    NONE_IDTYPE    = 0;
+    ID_IPV4_ADDR   = 1;       /* ip4-addr     */
+    ID_FQDN        = 2;       /* fqdn         */
+    ID_RFC822_ADDR = 3;       /* rfc822       */
+    ID_IPV6_ADDR   = 5;       /* ip6-addr     */
+    ID_DER_ASN1_DN = 9;       /* der-asn1-dn  */
+    ID_DER_ASN1_GN = 10;      /* der-asn1-gn  */
+    ID_KEY_ID      = 11;      /* key-id       */
  }
 
-message Profile {
-    // Profile id
-    string id = 1;
+enum CryptoAlg { // vpp/src/plugins/ikev2/ikev2.h : *_encr_type
+    CRYPTO_NONE       = 0;
+    CRYPTO_DES_IV64   = 1;         /* des-iv64  */
+    CRYPTO_DES        = 2;         /* des       */
+    CRYPTO_3DES       = 3;         /* 3des      */
+    CRYPTO_RC5        = 4;         /* rc5       */
+    CRYPTO_IDEA       = 5;         /* idea      */
+    CRYPTO_CAST       = 6;         /* cast      */
+    CRYPTO_BLOWFISH   = 7;         /* blowfish  */
+    CRYPTO_3IDEA      = 8;         /* 3idea     */
+    CRYPTO_DES_IV32   = 9;         /* des-iv32  */
+    CRYPTO_NULL       = 11;        /* null      */
+    CRYPTO_AES_CBC    = 12;        /* aes-cbc   */
+    CRYPTO_AES_CTR    = 13;        /* aes-ctr   */
+    CRYPTO_AES_GCM_16 = 20;        /* aes-gcm-16 */
+}
+
+enum IntegAlg { // vpp/src/plugins/ikev2/ikev2.h : *_integ_type
+    AUTH_NONE              = 0;     /* none              */
+    AUTH_HMAC_MD5_96       = 1;     /* md5-96            */
+    AUTH_HMAC_SHA1_96      = 2;     /* sha1-96           */
+    AUTH_DES_MAC           = 3;     /* des-mac           */
+    AUTH_KPDK_MD5          = 4;     /* kpdk-md5          */
+    AUTH_AES_XCBC_96       = 5;     /* aes-xcbc-96       */
+    AUTH_HMAC_MD5_128      = 6;     /* md5-128           */
+    AUTH_HMAC_SHA1_160     = 7;     /* sha1-160          */
+    AUTH_AES_CMAC_96       = 8;     /* cmac-96           */
+    AUTH_AES_128_GMAC      = 9;     /* aes-128-gmac      */
+    AUTH_AES_192_GMAC      = 10;    /* aes-192-gmac      */
+    AUTH_AES_256_GMAC      = 11;    /* aes-256-gmac      */
+    AUTH_HMAC_SHA2_256_128 = 12;    /* hmac-sha2-256-128 */
+    AUTH_HMAC_SHA2_384_192 = 13;    /* hmac-sha2-384-192 */
+    AUTH_HMAC_SHA2_512_256 = 14;    /* hmac-sha2-512-256 */
+}
+
+enum DHType { // vpp/src/plugins/ikev2/ikev2.h : *_dh_type
+    DH_NONE       =  0;    /* none            */
+    MODP_768      =  1;    /* modp-768        */
+    MODP_1024     =  2;    /* modp-1024       */
+    MODP_1536     =  5;    /* modp-1536       */
+    MODP_2048     = 14;    /* modp-2048       */
+    MODP_3072     = 15;    /* modp-3072       */
+    MODP_4096     = 16;    /* modp-4096       */
+    MODP_6144     = 17;    /* modp-6144       */
+    MODP_8192     = 18;    /* modp-8192       */
+    ECP_256       = 19;    /* ecp-256         */
+    ECP_384       = 20;    /* ecp-384         */
+    ECP_521       = 21;    /* ecp-521         */
+    MODP_1024_160 = 22;    /* modp-1024-160   */
+    MODP_2048_224 = 23;    /* modp-2048-224   */
+    MODP_2048_256 = 24;    /* modp-2048-256   */
+    ECP_192       = 25;    /* ecp-192         */
+}
+
+message Ikev2Profile {
+    // Profile name
+    string name = 1;
 
     message Auth {
         AuthMethod method = 1;
-        string data = 2;
+        bool hex = 2;
+        bytes data = 3;
     }
     Auth auth = 2;
 
-    string local_id = 3;
-    IDType local_id_type = 4;
-    string remote_id = 5;
-    IDType remote_id_type = 6;
+    message EndId {
+        IDType type = 1;
+        string data = 2;
+        bool is_local = 3;
+    }
+    repeated EndId id = 3;
 
-    bool  udp_encap = 7;
+    message ResponderInfo {
+        string interface = 1;
+        string addr = 2   [(ligato_options).type = IP];
+    }
+    ResponderInfo responder = 4;
 
     message TrafficSelector {
-        string local_addr_start = 1  [(ligato_options).type = IP];
-        string local_addr_stop = 2  [(ligato_options).type = IP];
-        string remote_addr_start = 3  [(ligato_options).type = IP];
-        string remote_addr_stop = 4  [(ligato_options).type = IP];
+        uint32 sa_index = 1;
+        uint32 child_sa_index = 2;
+        uint32 protocol = 3;
+        bool is_local = 4;
 
-        uint32 local_port_start = 5  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
-        uint32 local_port_stop = 6  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
-        uint32 remote_port_start = 7  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
-        uint32 remote_port_stop = 8  [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
+        uint32 start_port = 5 [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
+        uint32 end_port = 6 [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
 
-        uint32 protocol = 9;
+        string start_addr = 7  [(ligato_options).type = IP];
+        string end_addr = 8  [(ligato_options).type = IP];
     }
+    repeated TrafficSelector traffic_selector = 5;
 
-    TrafficSelector traffic_selector = 10;
+    message IkeTransforms {
+        CryptoAlg crypto_alg = 1;
+        uint32 crypto_key_size = 2;
+        IntegAlg integ_alg = 3;
+        DHType dh_type = 4;
+    }
+    IkeTransforms ike_transforms = 6;
+
+    message EspTransforms {
+        CryptoAlg crypto_alg = 1;
+        uint32 crypto_key_size = 2;
+        IntegAlg integ_alg = 3;
+    }
+    EspTransforms esp_transforms = 7;
+
+    uint64 life_time = 8;
+    uint64 life_time_maxdata = 9;
+    uint32 life_time_jitter = 10;
+    uint32 handover = 11;
+
+    uint32 ipsec_over_udpport = 12 [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
+
+    string tunnel_interface = 13;
+
+    bool disable_natt = 14;
+    bool udp_encap = 15;
 }

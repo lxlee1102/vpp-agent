@@ -27,7 +27,7 @@ type Ikev2VppAPI interface {
 	Ikev2VppRead
 
 	// Set profile via binary API
-	AddProfile(prof *ik.Profile) error
+	AddProfile(prof *ik.Ikev2Profile) error
 	// Remove profile via binary API
 	RemoveProfile(profile_id string) error
 }
@@ -35,7 +35,7 @@ type Ikev2VppAPI interface {
 // Ikev2VPPRead provides read methods for ikev2
 type Ikev2VppRead interface {
 	// DumpWgPeer returns a peers state
-	DumpIkev2Profile() (profList []*ik.Profile, err error)
+	DumpIkev2Profile() (profList []*ik.Ikev2Profile, err error)
 }
 
 var Handler = vpp.RegisterHandler(vpp.HandlerDesc{

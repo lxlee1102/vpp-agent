@@ -22,9 +22,9 @@ import (
 const ModuleName = "vpp.ikev2"
 
 var (
-	ModelIkev2Profile = models.Register(&Profile{}, models.Spec{
+	ModelIkev2Profile = models.Register(&Ikev2Profile{}, models.Spec{
 		Module:  ModuleName,
 		Version: "v1",
 		Type:    "profile",
-	}, models.WithNameTemplate("{{.Id}}"))
+	}, models.WithNameTemplate("{{.Name}}"))
 )

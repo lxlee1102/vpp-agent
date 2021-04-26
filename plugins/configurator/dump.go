@@ -496,7 +496,7 @@ func (svc *dumpService) DumpWgPeers() (peers []*vpp_wg.Peer, err error) {
 	return
 }
 
-func (svc *dumpService) DumpIkev2Profile() (profiles []*vpp_ikev2.Profile, err error) {
+func (svc *dumpService) DumpIkev2Profile() (profiles []*vpp_ikev2.Ikev2Profile, err error) {
 	if svc.ikev2Handler == nil {
 		// handler is not available
 		return nil, nil

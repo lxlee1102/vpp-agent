@@ -20,7 +20,7 @@ import (
 )
 
 // DumpIkev2Profile implements ikev2 handler.
-func (h *Ikev2VppHandler) DumpIkev2Profile() (profList []*ikev2.Profile, err error) {
+func (h *Ikev2VppHandler) DumpIkev2Profile() (profList []*ikev2.Ikev2Profile, err error) {
 	req := &vpp_ikev2.Ikev2ProfileDump{}
 	requestCtx := h.callsChannel.SendMultiRequest(req)
 
@@ -38,8 +38,8 @@ func (h *Ikev2VppHandler) DumpIkev2Profile() (profList []*ikev2.Profile, err err
 	}
 
 	for _, vppProfileDetails := range vppProfileList {
-		profDetails := &ikev2.Profile{
-			Id: vppProfileDetails.Profile.Name,
+		profDetails := &ikev2.Ikev2Profile{
+			Name: vppProfileDetails.Profile.Name,
 		}
 
 		profList = append(profList, profDetails)

@@ -81,8 +81,8 @@ func NewIkev2ProfileDescriptor(ikev2Handler vppcalls.Ikev2VppAPI, log logging.Pl
 
 // GetDescriptor returns descriptor suitable for registration (via adapter) with
 // the KVScheduler.
-func (d *Ikev2ProfileDescriptor) GetDescriptor() *adapter.ProfileDescriptor {
-	return &adapter.ProfileDescriptor{
+func (d *Ikev2ProfileDescriptor) GetDescriptor() *adapter.Ikev2ProfileDescriptor {
+	return &adapter.Ikev2ProfileDescriptor{
 		Name:                 ProfileDescriptorName,
 		NBKeyPrefix:          ike.ModelIkev2Profile.KeyPrefix(),
 		ValueTypeName:        ike.ModelIkev2Profile.ProtoName(),
@@ -98,12 +98,12 @@ func (d *Ikev2ProfileDescriptor) GetDescriptor() *adapter.ProfileDescriptor {
 	}
 }
 
-func (d *Ikev2ProfileDescriptor) EquivalentIkev2Profile(key string, oldProfile, newProfile *ike.Profile) bool {
+func (d *Ikev2ProfileDescriptor) EquivalentIkev2Profile(key string, oldProfile, newProfile *ike.Ikev2Profile) bool {
 	// compare base fields
 	return proto.Equal(oldProfile, newProfile)
 }
 
-func (d *Ikev2ProfileDescriptor) Validate(key string, profile *ike.Profile) (err error) {
+func (d *Ikev2ProfileDescriptor) Validate(key string, profile *ike.Ikev2Profile) (err error) {
 	//	if len(peer.PublicKey) != PeerKeyLen {
 	//		return kvs.NewInvalidValueError(ErrWgPeerKeyLen, "public_key")
 	//	}
@@ -133,7 +133,7 @@ func (d *Ikev2ProfileDescriptor) Validate(key string, profile *ike.Profile) (err
 }
 
 // Create adds a new ikev2 profile.
-func (d *Ikev2ProfileDescriptor) Create(key string, profile *ike.Profile) (metadata interface{}, err error) {
+func (d *Ikev2ProfileDescriptor) Create(key string, profile *ike.Ikev2Profile) (metadata interface{}, err error) {
 	err = d.ikev2Handler.AddProfile(profile)
 	if err != nil {
 		d.log.Error(err)
@@ -143,8 +143,8 @@ func (d *Ikev2ProfileDescriptor) Create(key string, profile *ike.Profile) (metad
 }
 
 // Delete removes VPP ikev2 profile.
-func (d *Ikev2ProfileDescriptor) Delete(key string, profile *ike.Profile, metadata interface{}) error {
-	err := d.ikev2Handler.RemoveProfile(profile.Id)
+func (d *Ikev2ProfileDescriptor) Delete(key string, profile *ike.Ikev2Profile, metadata interface{}) error {
+	err := d.ikev2Handler.RemoveProfile(profile.Name)
 	if err != nil {
 		d.log.Error(err)
 	}
@@ -152,7 +152,7 @@ func (d *Ikev2ProfileDescriptor) Delete(key string, profile *ike.Profile, metada
 }
 
 // Retrieve returns all wg peers.
-func (d *Ikev2ProfileDescriptor) Retrieve(correlate []adapter.ProfileKVWithMetadata) (dump []adapter.ProfileKVWithMetadata, err error) {
+func (d *Ikev2ProfileDescriptor) Retrieve(correlate []adapter.Ikev2ProfileKVWithMetadata) (dump []adapter.Ikev2ProfileKVWithMetadata, err error) {
 	// dump Ikev2 Profile
 	prs, err := d.ikev2Handler.DumpIkev2Profile()
 	if err != nil {
@@ -160,7 +160,7 @@ func (d *Ikev2ProfileDescriptor) Retrieve(correlate []adapter.ProfileKVWithMetad
 		return dump, err
 	}
 	for _, pr := range prs {
-		dump = append(dump, adapter.ProfileKVWithMetadata{
+		dump = append(dump, adapter.Ikev2ProfileKVWithMetadata{
 			Key:    models.Key(pr),
 			Value:  pr,
 			Origin: kvs.FromNB,

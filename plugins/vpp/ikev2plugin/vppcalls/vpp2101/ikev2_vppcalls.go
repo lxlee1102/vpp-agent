@@ -19,9 +19,9 @@ import (
 	ikev2 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2"
 )
 
-func (h *Ikev2VppHandler) AddProfile(prof *ikev2.Profile) error {
+func (h *Ikev2VppHandler) AddProfile(prof *ikev2.Ikev2Profile) error {
 	request := &vpp_ikev2.Ikev2ProfileAddDel{
-		Name:  prof.Id,
+		Name:  prof.Name,
 		IsAdd: true,
 	}
 	// prepare reply

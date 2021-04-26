@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-//go:generate descriptor-adapter --descriptor-name Profile --value-type *vpp_ikev2.Profile --import "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2" --output-dir "descriptor"
+//go:generate descriptor-adapter --descriptor-name Ikev2Profile --value-type *vpp_ikev2.Ikev2Profile --import "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2" --output-dir "descriptor"
 
 package ikev2plugin
 
@@ -59,7 +59,7 @@ func (p *Ikev2Plugin) Init() (err error) {
 	}
 
 	p.profileDescriptor = descriptor.NewIkev2ProfileDescriptor(p.Ikev2Handler, p.Log)
-	profileDescriptor := adapter.NewProfileDescriptor(p.profileDescriptor.GetDescriptor())
+	profileDescriptor := adapter.NewIkev2ProfileDescriptor(p.profileDescriptor.GetDescriptor())
 	err = p.KVScheduler.RegisterKVDescriptor(profileDescriptor)
 	if err != nil {
 		return err

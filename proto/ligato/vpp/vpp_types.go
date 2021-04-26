@@ -81,5 +81,5 @@ type (
 	WgPeer = vpp_wg.Peer
 
 	// Ikev2
-	Ikev2Profile = vpp_ikev2.Profile
+	Ikev2Profile = vpp_ikev2.Ikev2Profile
 )
