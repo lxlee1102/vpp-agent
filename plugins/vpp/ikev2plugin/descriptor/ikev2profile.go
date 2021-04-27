@@ -15,6 +15,8 @@
 package descriptor
 
 import (
+	"net"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"go.ligato.io/cn-infra/v2/logging"
@@ -25,44 +27,74 @@ import (
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/ikev2plugin/descriptor/adapter"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/ikev2plugin/vppcalls"
 	ike "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2"
+	interfaces "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/interfaces"
 )
 
 const (
 	// ProfileDescriptorName is the name of the descriptor for VPP ikev2 profile.
 	ProfileDescriptorName = "vpp-ikev2-profile"
 
-	// Length of wireguard public-key in base64. It should be equal 32 in binary
-	PeerKeyLen = 44
-
 	// MaxU16
 	MaxU16 = 0xFFFF
 
+	// MaxU32
+	MaxU32 = 0xFFFFFFFF
+
 	// dependency labels
-	//wgPeerVrfTableDep = "vrf-table-exists"
+	tunnelIfDep    = "tunnel-if-exists"
+	responderIfDep = "responder-if-exists"
+	AddressDep     = "ip-address-exists"
 )
 
 // A list of errors:
 var (
-	// ErrWgPeerKeyLen is returned when public-key length has wrong size.
-	ErrWgPeerKeyLen = errors.New("Invalid wireguard peer public-key length")
+	ErrIkev2ProfileName = errors.New("Invalid ikev2 profile name (or id)")
 
-	// ErrWgPeerWithoutInterface is returned when wireguard interface name is empty.
-	ErrWgPeerWithoutInterface = errors.New("Wireguard interface is not defined")
+	ErrIkev2ProfileAuth = errors.New("Invalid ikev2 profile Auth informations")
 
-	// ErrWgPeerPKeepalive is returned when persistent keepalive exceeds max value.
-	ErrWgPeerPKeepalive = errors.New("Persistent keepalive exceeds the limits")
+	ErrIkev2ProfileTunIF = errors.New("Ikev2 tunnel interface is not defined")
 
-	// ErrWgPeerPort is returned when udp-port exceeds max value.
-	ErrWgPeerPort = errors.New("Invalid wireguard peer port")
+	ErrIkev2ProfileLocID = errors.New("Lost or Invalid ikev2 local id")
 
-	// ErrWgPeerEndpointMissing is returned when endpoint address was not set or set to an empty string.
-	ErrWgPeerEndpointMissing = errors.Errorf("Missing endpoint address for wireguard peer")
+	ErrIkev2ProfileRemID = errors.New("Lost or Invalid ikev2 remote id")
 
-	// ErrWgSrcAddrBad is returned when endpoint address was not set to valid IP address.
-	ErrWgPeerEndpointBad = errors.New("Invalid wireguard peer endpoint")
+	ErrIkev2ProfileMoreID = errors.New("Too more ikev2 profile local/remote id")
 
-	// ErrWgPeerAllowedIPs is returned when one of allowedIp address was not set to valid IP address.
-	ErrWgPeerAllowedIPs = errors.New("Invalid wireguard peer allowedIps")
+	ErrIkev2ProfileRespAddr = errors.New("Lost or Invalid ikev2 repsonder's address")
+
+	ErrIkev2ProfileLocTS = errors.New("Lost or Invalid ikev2 local traffic_selector")
+
+	ErrIkev2ProfileRemTS = errors.New("Lost or Invalid ikev2 remote traffic_selector")
+
+	ErrIkev2ProfileTSPort = errors.New("Invalid ikev2 traffic_selector port")
+
+	ErrIkev2ProfileTSAddr = errors.New("Invalid ikev2 traffic_selector address")
+
+	ErrIkev2ProfileTSProto = errors.New("Invalid ikev2 traffic_selector protocol, 0-3 is valid")
+
+	ErrIkev2ProfileTSMore = errors.New("Invalid ikev2 profile, only support 2 traffic_selector, local/remote")
+
+	ErrIkev2ProfileLifeTime = errors.New("Ikev2 lifetime exceeds the limits")
+
+	ErrIkev2ProfileLifeTimeJitter = errors.New("Ikev2 life time jitter exceeds the limits")
+
+	ErrIkev2ProfileHandover = errors.New("Invalid ikev2 handover")
+
+	ErrIkev2IpsecOverUdpPort = errors.New("Invalid ipsec over udp port")
+
+	ErrIkev2ProfileIkeTSCyptorAlg = errors.New("Invalid ike transforms crypto algorithm")
+
+	ErrIkev2ProfileIkeTSCyptorKeySize = errors.New("Invalid ike transforms key size")
+
+	ErrIkev2ProfileIkeTSIntegAlg = errors.New("Invalid ike transforms integ algorithm")
+
+	ErrIkev2ProfileIkeTSDhType = errors.New("Invalid ike transforms DH type")
+
+	ErrIkev2ProfileEspTSCyptorAlg = errors.New("Invalid esp transforms crypto algorithm")
+
+	ErrIkev2ProfileEspTSCyptorKeySize = errors.New("Invalid esp transforms key size")
+
+	ErrIkev2ProfileEspTSIntegAlg = errors.New("Invalid esp transforms integ algorithm")
 )
 
 // Ikev2ProfileDescriptor teaches KVScheduler how to configure VPP Ikev2.
@@ -94,6 +126,7 @@ func (d *Ikev2ProfileDescriptor) GetDescriptor() *adapter.Ikev2ProfileDescriptor
 		Delete:               d.Delete,
 		Retrieve:             d.Retrieve,
 		RetrieveDependencies: []string{vpp_ifdescriptor.InterfaceDescriptorName},
+		Dependencies:         d.Dependencies,
 		WithMetadata:         true,
 	}
 }
@@ -103,32 +136,157 @@ func (d *Ikev2ProfileDescriptor) EquivalentIkev2Profile(key string, oldProfile, 
 	return proto.Equal(oldProfile, newProfile)
 }
 
-func (d *Ikev2ProfileDescriptor) Validate(key string, profile *ike.Ikev2Profile) (err error) {
-	//	if len(peer.PublicKey) != PeerKeyLen {
-	//		return kvs.NewInvalidValueError(ErrWgPeerKeyLen, "public_key")
-	//	}
-	//	if peer.WgIfName == "" {
-	//		return kvs.NewInvalidValueError(ErrWgPeerWithoutInterface, "wg_if_name")
-	//	}
-	//	if peer.PersistentKeepalive > MaxU16 {
-	//		return kvs.NewInvalidValueError(ErrWgPeerPKeepalive, "persistent_keepalive")
-	//	}
-	//	if peer.Endpoint == "" {
-	//		return kvs.NewInvalidValueError(ErrWgPeerEndpointMissing, "endpoint")
-	//	}
-	//	if net.ParseIP(peer.Endpoint).IsUnspecified() {
-	//		return kvs.NewInvalidValueError(ErrWgPeerEndpointBad, "endpoint")
-	//	}
-	//	if peer.Port > MaxU16 {
-	//		return kvs.NewInvalidValueError(ErrWgPeerPort, "port")
-	//	}
-	//
-	//	for _, allowedIp := range peer.AllowedIps {
-	//		_,err := ip_types.ParsePrefix(allowedIp)
-	//		if err != nil {
-	//			return kvs.NewInvalidValueError(ErrWgPeerAllowedIPs, "allowed_ips")
-	//		}
-	//	}
+func (d *Ikev2ProfileDescriptor) Validate(key string, pfile *ike.Ikev2Profile) (err error) {
+	if len(pfile.Name) == 0 {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileName, "name")
+	}
+
+	if pfile.Auth == nil || len(pfile.Auth.Data) <= 0 {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileAuth, "auth")
+	}
+
+	if pfile.Id == nil || len(pfile.Id) == 0 {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileLocID, "id")
+	}
+	idlen := len(pfile.Id)
+	if idlen == 1 {
+		if pfile.Id[0].IsLocal {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileRemID, "id")
+		} else {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileLocID, "id")
+		}
+	} else if idlen == 2 {
+		if pfile.Id[0].IsLocal && pfile.Id[1].IsLocal {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileRemID, "id")
+		}
+		if !pfile.Id[0].IsLocal && !pfile.Id[1].IsLocal {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileLocID, "id")
+		}
+	} else {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileMoreID, "id")
+	}
+
+	if pfile.Responder != nil {
+		if pfile.Responder.Addr != "" {
+			if net.ParseIP(pfile.Responder.Addr) == nil {
+				return kvs.NewInvalidValueError(ErrIkev2ProfileRespAddr, "responder")
+			}
+		}
+	}
+
+	if pfile.TrafficSelector == nil || len(pfile.TrafficSelector) == 0 {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileLocTS, "traffic_seclector")
+	}
+	err = validateTrafficSelector(pfile.TrafficSelector)
+	if err != nil {
+		return err
+	}
+
+	err = validateIkeTransforms(pfile.IkeTransforms)
+	if err != nil {
+		return err
+	}
+
+	err = validateEspTransforms(pfile.EspTransforms)
+	if err != nil {
+		return err
+	}
+
+	if pfile.LifeTimeJitter > MaxU32 {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileLifeTimeJitter, "life_time_jitter")
+	}
+
+	if pfile.LifeTime > pfile.LifeTimeMaxdata {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileLifeTime, "life_time")
+	}
+
+	if pfile.Handover > MaxU32 {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileHandover, "handover")
+	}
+
+	if pfile.IpsecOverUdpport > MaxU16 {
+		return kvs.NewInvalidValueError(ErrIkev2IpsecOverUdpPort, "ipsec_over_updport")
+	}
+
+	if pfile.TunnelInterface == "" {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileTunIF, "tunnel_interface")
+	}
+
+	return nil
+}
+
+func validateTrafficSelector(ts []*ike.Ikev2Profile_TrafficSelector) error {
+	tslen := len(ts)
+	if tslen == 1 {
+		if ts[0].IsLocal {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileRemTS, "traffic_seclector")
+		} else {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileLocTS, "traffic_seclector")
+		}
+	} else if tslen == 2 {
+		if ts[0].IsLocal && ts[1].IsLocal {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileRemTS, "traffic_seclector")
+		} else if !ts[0].IsLocal && !ts[1].IsLocal {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileLocTS, "traffic_seclector")
+		}
+
+		for _, v := range ts {
+			if v.StartPort > MaxU16 || v.EndPort > MaxU16 {
+				return kvs.NewInvalidValueError(ErrIkev2ProfileTSPort, "traffic_seclector")
+			}
+			if net.ParseIP(v.StartAddr) == nil || net.ParseIP(v.EndAddr) == nil {
+				return kvs.NewInvalidValueError(ErrIkev2ProfileTSAddr, "traffic_seclector")
+			}
+			_, ok := ike.Ikev2Proto_name[int32(v.Protocol)]
+			if !ok {
+				return kvs.NewInvalidValueError(ErrIkev2ProfileTSProto, "traffic_seclector")
+			}
+		}
+	} else {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileTSMore, "traffic_seclector")
+	}
+
+	return nil
+}
+
+func validateIkeTransforms(tf *ike.Ikev2Profile_IkeTransforms) error {
+	if tf == nil {
+		return nil
+	}
+
+	_, ok := ike.CryptoAlg_name[int32(tf.CryptoAlg)]
+	if !ok {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileIkeTSCyptorAlg, "ike_transforms")
+	}
+
+	_, ok = ike.IntegAlg_name[int32(tf.IntegAlg)]
+	if !ok {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileIkeTSIntegAlg, "ike_transforms")
+	}
+
+	_, ok = ike.DHType_name[int32(tf.DhType)]
+	if !ok {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileIkeTSDhType, "ike_transforms")
+	}
+
+	return nil
+}
+
+func validateEspTransforms(tf *ike.Ikev2Profile_EspTransforms) error {
+	if tf == nil {
+		return nil
+	}
+
+	_, ok := ike.CryptoAlg_name[int32(tf.CryptoAlg)]
+	if !ok {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileIkeTSCyptorAlg, "esp_transforms")
+	}
+
+	_, ok = ike.IntegAlg_name[int32(tf.IntegAlg)]
+	if !ok {
+		return kvs.NewInvalidValueError(ErrIkev2ProfileIkeTSIntegAlg, "esp_transforms")
+	}
+
 	return nil
 }
 
@@ -151,7 +309,7 @@ func (d *Ikev2ProfileDescriptor) Delete(key string, profile *ike.Ikev2Profile, m
 	return err
 }
 
-// Retrieve returns all wg peers.
+// Retrieve returns all ikev2 profile
 func (d *Ikev2ProfileDescriptor) Retrieve(correlate []adapter.Ikev2ProfileKVWithMetadata) (dump []adapter.Ikev2ProfileKVWithMetadata, err error) {
 	// dump Ikev2 Profile
 	prs, err := d.ikev2Handler.DumpIkev2Profile()
@@ -168,4 +326,26 @@ func (d *Ikev2ProfileDescriptor) Retrieve(correlate []adapter.Ikev2ProfileKVWith
 	}
 
 	return dump, nil
+}
+
+// Dependencies lists the interface and SAs as the dependencies for the binding.
+func (d *Ikev2ProfileDescriptor) Dependencies(key string, value *ike.Ikev2Profile) []kvs.Dependency {
+	deps := []kvs.Dependency{
+		{
+			Label: tunnelIfDep,
+			Key:   interfaces.InterfaceKey(value.TunnelInterface),
+		},
+	}
+
+	if value.Responder != nil {
+		if value.Responder.Interface != "" {
+			deps = append(deps, kvs.Dependency{
+				Label: responderIfDep,
+				Key:   interfaces.InterfaceKey(value.Responder.Interface),
+			})
+		}
+		// TODO : checking value.Responder.Addr , how to do ?
+	}
+
+	return deps
 }

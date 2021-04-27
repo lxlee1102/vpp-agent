@@ -6,6 +6,13 @@ option go_package = "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2;vpp_ikev2"
 
 import "ligato/annotations.proto";
 
+enum Ikev2Proto { // vpp/src/plugins/ikev2/ikev2.h
+    IKEV2_PROTOCOL_NONE  = 0;
+    IKEV2_PROTOCOL_IKE   = 1;
+    IKEV2_PROTOCOL_AH    = 2;
+    IKEV2_PROTOCOL_ESP   = 3;
+}
+
 enum AuthMethod { // vpp/src/plugins/ikev2/ikev2.h
     NONE_AUTHM     = 0;
     RSA_SIG        = 1;
@@ -104,7 +111,7 @@ message Ikev2Profile {
     message TrafficSelector {
         uint32 sa_index = 1;
         uint32 child_sa_index = 2;
-        uint32 protocol = 3;
+        Ikev2Proto protocol = 3;
         bool is_local = 4;
 
         uint32 start_port = 5 [(ligato_options).int_range = {minimum: 0 maximum: 65535}];
