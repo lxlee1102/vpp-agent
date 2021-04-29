@@ -62,6 +62,8 @@ var (
 
 	ErrIkev2ProfileRespAddr = errors.New("Lost or Invalid ikev2 repsonder's address")
 
+	ErrIkev2ProfileRespIfAddr = errors.New("Lost ikev2 repsonder's address or interface")
+
 	ErrIkev2ProfileLocTS = errors.New("Lost or Invalid ikev2 local traffic_selector")
 
 	ErrIkev2ProfileRemTS = errors.New("Lost or Invalid ikev2 remote traffic_selector")
@@ -167,10 +169,11 @@ func (d *Ikev2ProfileDescriptor) Validate(key string, pfile *ike.Ikev2Profile) (
 	}
 
 	if pfile.Responder != nil {
-		if pfile.Responder.Addr != "" {
-			if net.ParseIP(pfile.Responder.Addr) == nil {
-				return kvs.NewInvalidValueError(ErrIkev2ProfileRespAddr, "responder")
-			}
+		if pfile.Responder.Interface == "" || pfile.Responder.Addr == "" {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileRespIfAddr, "responder")
+		}
+		if net.ParseIP(pfile.Responder.Addr) == nil {
+			return kvs.NewInvalidValueError(ErrIkev2ProfileRespAddr, "responder")
 		}
 	}
 
