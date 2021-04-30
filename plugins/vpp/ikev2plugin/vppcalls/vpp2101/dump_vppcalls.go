@@ -40,56 +40,11 @@ func (h *Ikev2VppHandler) DumpIkev2Profile() (profList []*ikev2.Ikev2Profile, er
 	for _, vppProfileDetails := range vppProfileList {
 		profDetails := &ikev2.Ikev2Profile{
 			Name: vppProfileDetails.Profile.Name,
+			// TODO others
 		}
 
 		profList = append(profList, profDetails)
 	}
 
 	return
-	//	req := &vpp_wg.WireguardPeersDump{}
-	//	requestCtx := h.callsChannel.SendMultiRequest(req)
-	//
-	//	var vppPeerList []*vpp_wg.WireguardPeersDetails
-	//	for {
-	//		vppPeerDetails := &vpp_wg.WireguardPeersDetails{}
-	//		stop, err := requestCtx.ReceiveReply(vppPeerDetails)
-	//		if stop {
-	//			break
-	//		}
-	//		if err != nil {
-	//			return nil, err
-	//		}
-	//		vppPeerList = append(vppPeerList, vppPeerDetails)
-	//	}
-	//
-	//	for _, vppPeerDetails := range vppPeerList {
-	//		peerDetails := &wg.Peer{
-	//			Port:                uint32(vppPeerDetails.Peer.Port),
-	//			PersistentKeepalive: uint32(vppPeerDetails.Peer.PersistentKeepalive),
-	//			Flags:               uint32(vppPeerDetails.Peer.Flags),
-	//		}
-	//
-	//		peerDetails.PublicKey = base64.StdEncoding.EncodeToString(vppPeerDetails.Peer.PublicKey)
-	//
-	//		for _, prefix := range vppPeerDetails.Peer.AllowedIps {
-	//			peerDetails.AllowedIps = append(peerDetails.AllowedIps, prefix.String())
-	//		}
-	//
-	//		ifName, _, exists := h.ifIndexes.LookupBySwIfIndex(uint32(vppPeerDetails.Peer.SwIfIndex))
-	//		if !exists {
-	//			h.log.Warnf("Wireguard peers dump: interface name for index %d not found", vppPeerDetails.Peer.SwIfIndex)
-	//			continue
-	//		}
-	//
-	//		peerDetails.WgIfName = ifName
-	//
-	//		endpointAddr := vppPeerDetails.Peer.Endpoint.ToIP()
-	//		if !endpointAddr.IsUnspecified() {
-	//			peerDetails.Endpoint = endpointAddr.String()
-	//		}
-	//
-	//		peerList = append(peerList, peerDetails)
-	//	}
-	//
-	//return
 }

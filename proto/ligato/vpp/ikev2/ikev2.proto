@@ -149,3 +149,8 @@ message Ikev2Profile {
     bool disable_natt = 14;
     bool udp_encap = 15;
 }
+
+message Ikev2Liveness {
+    uint32 period = 1;
+    uint32 max_retries = 2;
+}

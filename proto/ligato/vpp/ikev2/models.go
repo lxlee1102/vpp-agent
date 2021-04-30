@@ -27,4 +27,10 @@ var (
 		Version: "v1",
 		Type:    "profile",
 	}, models.WithNameTemplate("{{.Name}}"))
+
+	ModelIkev2Liveness = models.Register(&Ikev2Liveness{}, models.Spec{
+		Module:  ModuleName,
+		Version: "v1",
+		Type:    "liveness",
+	})
 )

@@ -30,6 +30,8 @@ type Ikev2VppAPI interface {
 	AddProfile(prof *ik.Ikev2Profile) error
 	// Remove profile via binary API
 	RemoveProfile(profile_id string) error
+	// Set Liveness via binary API
+	SetLiveness(ln *ik.Ikev2Liveness) error
 }
 
 // Ikev2VPPRead provides read methods for ikev2

@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 //go:generate descriptor-adapter --descriptor-name Ikev2Profile --value-type *vpp_ikev2.Ikev2Profile --import "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2" --output-dir "descriptor"
+//go:generate descriptor-adapter --descriptor-name Ikev2Liveness --value-type *vpp_ikev2.Ikev2Liveness --import "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2" --output-dir "descriptor"
 
 package ikev2plugin
 
@@ -35,7 +36,8 @@ type Ikev2Plugin struct {
 	// handler
 	Ikev2Handler vppcalls.Ikev2VppAPI
 
-	profileDescriptor *descriptor.Ikev2ProfileDescriptor
+	profileDescriptor  *descriptor.Ikev2ProfileDescriptor
+	livenessDescriptor *descriptor.Ikev2LivenessDescriptor
 }
 
 type Deps struct {
@@ -58,9 +60,18 @@ func (p *Ikev2Plugin) Init() (err error) {
 		return errors.New("Ikev2 handler is not available")
 	}
 
+	// profile
 	p.profileDescriptor = descriptor.NewIkev2ProfileDescriptor(p.Ikev2Handler, p.Log)
 	profileDescriptor := adapter.NewIkev2ProfileDescriptor(p.profileDescriptor.GetDescriptor())
 	err = p.KVScheduler.RegisterKVDescriptor(profileDescriptor)
+	if err != nil {
+		return err
+	}
+
+	// setliveness
+	p.livenessDescriptor = descriptor.NewIkev2LivenessDescriptor(p.Ikev2Handler, p.Log)
+	livenessDescriptor := adapter.NewIkev2LivenessDescriptor(p.livenessDescriptor.GetDescriptor())
+	err = p.KVScheduler.RegisterKVDescriptor(livenessDescriptor)
 	if err != nil {
 		return err
 	}

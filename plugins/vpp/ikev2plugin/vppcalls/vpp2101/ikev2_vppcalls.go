@@ -118,6 +118,11 @@ func (h *Ikev2VppHandler) RemoveProfile(profile_id string) error {
 	return h.profileAddDelName(profile_id, false)
 }
 
+// Set liveness via binary API
+func (h *Ikev2VppHandler) SetLiveness(ln *ikev2.Ikev2Liveness) error {
+	return h.setLivenessInfo(ln.Period, ln.MaxRetries)
+}
+
 // add profile id
 func (h *Ikev2VppHandler) AddProfileName(name string) error {
 	return h.profileAddDelName(name, true)
@@ -385,6 +390,21 @@ func (h *Ikev2VppHandler) SetDisableNatt(name string) error {
 
 	reply := &vpp_ikev2.Ikev2ProfileDisableNattReply{}
 
+	if err := h.callsChannel.SendRequest(request).ReceiveReply(reply); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *Ikev2VppHandler) setLivenessInfo(period, maxRetries uint32) error {
+	request := &vpp_ikev2.Ikev2ProfileSetLiveness{
+		Period:     period,
+		MaxRetries: maxRetries,
+	}
+	// prepare reply
+	reply := &vpp_ikev2.Ikev2ProfileSetLivenessReply{}
+	// send request and obtain reply
 	if err := h.callsChannel.SendRequest(request).ReceiveReply(reply); err != nil {
 		return err
 	}
