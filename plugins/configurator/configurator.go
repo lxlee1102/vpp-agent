@@ -17,6 +17,10 @@ package configurator
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
 	"runtime/trace"
 	"strconv"
@@ -119,6 +123,14 @@ func (svc *configuratorServer) Update(ctx context.Context, req *pb.UpdateRequest
 	}
 	results, err := svc.dispatch.PushData(ctx, kvPairs)
 
+	// savevppconfigs
+	if err == nil {
+		err1 := saveVPPConfigs()
+		if err1 != nil {
+			logging.Errorf("saveVPPConfigs failed: %v", err1)
+		}
+	}
+
 	header := map[string]string{}
 	if seqNum := svc.extractTxnSeqNum(results); seqNum >= 0 {
 		header["seqnum"] = fmt.Sprint(seqNum)
@@ -194,6 +206,14 @@ func (svc *configuratorServer) Delete(ctx context.Context, req *pb.DeleteRequest
 		ctx = contextdecorator.DataSrcContext(ctx, "grpc")
 	}
 	results, err := svc.dispatch.PushData(ctx, kvPairs)
+
+	// savevppconfigs
+	if err == nil {
+		err1 := saveVPPConfigs()
+		if err1 != nil {
+			logging.Errorf("saveVPPConfigs failed: %v", err1)
+		}
+	}
 
 	header := map[string]string{}
 	if seqNum := svc.extractTxnSeqNum(results); seqNum >= 0 {
@@ -273,4 +293,61 @@ func newConfig() *pb.Config {
 		VppConfig:      &vpp.ConfigData{},
 		NetallocConfig: &netalloc.ConfigData{},
 	}
+}
+
+const (
+	exeAgentctl = "/agentctl"
+	cfgFile     = "/vppcfg/config.yaml"
+	cfgFileBak  = "/vppcfg/config.yaml.bak-"
+	cfgFileTmp  = "/vppcfg/config.yaml.tmp"
+)
+
+func saveVPPConfigs() error {
+	ex, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("get exec information failed: %v", err)
+	}
+	exPath := filepath.Dir(ex)
+
+	cmd := exec.Command(exPath+exeAgentctl, "config", "get")
+	opBytes, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("run agentctl config get failed: %v", err)
+	}
+
+	for i := 0; i < 6; i++ {
+		err = ioutil.WriteFile(exPath+cfgFileTmp, opBytes, 0644)
+		if err == nil {
+			break
+		} else {
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("write %s failed: %v", cfgFileTmp, err)
+	}
+
+	tStr := time.Now().Format("2006-01-02_15:04:05")
+
+	// bak
+	for i := 0; i < 6; i++ {
+		err = ioutil.WriteFile(exPath+cfgFileBak+tStr, opBytes, 0644)
+		if err == nil {
+			break
+		} else {
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+
+	//
+	err = os.Rename(exPath+cfgFileTmp, exPath+cfgFile)
+	if err != nil {
+		return fmt.Errorf("rename %s to %s failed: %v", cfgFileTmp, cfgFile, err)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

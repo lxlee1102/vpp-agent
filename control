@@ -7,10 +7,14 @@ mkdir -p var
 
 module=vpp-agent
 app=$module
+agtapp=agentctl
 conf_d=/opt/vpp-agent/etc
+vppcfg_d=/opt/vpp-agent/vppcfg
 #conf=cfg.json
 pidfile=var/vpp-agent.pid
 logfile=var/vpp-agent.log
+#
+vppcfg_bak_maxnum=100
 
 function check_pid() {
     if [ -f $pidfile ];then
@@ -21,6 +25,21 @@ function check_pid() {
         fi
     fi
     return 0
+}
+
+function loadvppconfigs() {
+    if [ -s $vppcfg_d/config.yaml ]; then
+        ./$agtapp config update $vppcfg_d/config.yaml
+    fi
+
+}
+
+function removebakconfigs() {
+    cfgcount=`ls -l $vppcfg_d | grep bak| wc -l`
+    if [ $cfgcount -gt $vppcfg_bak_maxnum ]; then
+	    rmcount=`expr $cfgcount - $vppcfg_bak_maxnum`
+	    rm -f `ls -l $vppcfg_d/ |grep bak |head -n $rmcount | awk -v dir="$vppcfg_d/" '{print dir$9}'`
+    fi
 }
 
 function start() {
@@ -42,6 +61,11 @@ function start() {
         echo "$app failed to start."
         return 1
     fi
+
+    sleep 2
+
+    loadvppconfigs
+    removebakconfigs
 }
 
 function stop() {
@@ -80,6 +104,7 @@ function build() {
     mkdir -p ./out/etc
     mkdir -p ./out/var
     mkdir -p ./out/scripts
+    mkdir -p ./out/vppcfg
     scp cmd/agentctl/agentctl cmd/vpp-agent/vpp-agent control ./out
     scp cmfiles/*.conf ./out/etc
     scp cmfiles/*.sh ./out/scripts
@@ -95,7 +120,7 @@ function pack() {
 }
 
 function help() {
-    echo "$0 build|pack|start|stop|restart|status|tail"
+    echo "$0 build|pack|start|stop|restart|status|tail|tidyvppconf"
 }
 
 if [ "$1" == "" ]; then
@@ -114,6 +139,8 @@ elif [ "$1" == "build" ];then
     build
 elif [ "$1" == "pack" ];then
     pack
+elif [ "$1" == "tidyvppconf" ];then
+    removebakconfigs
 else
     help
 fi
