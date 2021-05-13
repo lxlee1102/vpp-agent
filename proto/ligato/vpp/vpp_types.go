@@ -81,5 +81,11 @@ type (
 	WgPeer = vpp_wg.Peer
 
 	// Ikev2
-	Ikev2Profile = vpp_ikev2.Ikev2Profile
+	Ikev2Profile                 = vpp_ikev2.Ikev2Profile
+	Ikev2Profile_Auth            = vpp_ikev2.Ikev2Profile_Auth
+	Ikev2Profile_EndId           = vpp_ikev2.Ikev2Profile_EndId
+	Ikev2Profile_ResponderInfo   = vpp_ikev2.Ikev2Profile_ResponderInfo
+	Ikev2Profile_TrafficSelector = vpp_ikev2.Ikev2Profile_TrafficSelector
+	Ikev2Profile_IkeTransforms   = vpp_ikev2.Ikev2Profile_IkeTransforms
+	Ikev2Profile_EspTransforms   = vpp_ikev2.Ikev2Profile_EspTransforms
 )

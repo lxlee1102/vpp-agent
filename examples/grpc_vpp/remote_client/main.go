@@ -34,6 +34,7 @@ import (
 	"go.ligato.io/vpp-agent/v3/proto/ligato/linux"
 	linux_interfaces "go.ligato.io/vpp-agent/v3/proto/ligato/linux/interfaces"
 	"go.ligato.io/vpp-agent/v3/proto/ligato/vpp"
+	vpp_ikev2 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ikev2"
 	interfaces "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/interfaces"
 	vpp_ipsec "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/ipsec"
 	vpp_l3 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/l3"
@@ -126,11 +127,13 @@ func (p *ExamplePlugin) demonstrateClient(client configurator.ConfiguratorServic
 		VppConfig: &vpp.ConfigData{
 			Interfaces: []*interfaces.Interface{
 				memif1,
+				ipip0,
 			},
 			IpscanNeighbor: ipScanNeigh,
 			IpsecSas:       []*vpp_ipsec.SecurityAssociation{sa10},
 			IpsecSpds:      []*vpp_ipsec.SecurityPolicyDatabase{spd1},
 			IpsecSps:       []*vpp_ipsec.SecurityPolicy{sp},
+			Ikev2Profiles:  []*vpp_ikev2.Ikev2Profile{pr1},
 		},
 		LinuxConfig: &linux.ConfigData{
 			Interfaces: []*linux_interfaces.Interface{
@@ -298,6 +301,75 @@ var (
 				HostIfName: "veth2",
 			},
 		},
+	}
+
+	ipip0 = &vpp.Interface{
+		Name:    "ipip0",
+		Type:    interfaces.Interface_IPIP_TUNNEL,
+		Enabled: true,
+		IpAddresses: []string{
+			"192.10.10.2/24",
+		},
+		Link: &interfaces.Interface_Ipip{
+			Ipip: &interfaces.IPIPLink{
+				TunnelMode: interfaces.IPIPLink_POINT_TO_POINT,
+				SrcAddr:    "192.168.4.2",
+				DstAddr:    "192.168.4.1",
+			},
+		},
+	}
+
+	pr1 = &vpp.Ikev2Profile{
+		Name: "pr1",
+		Auth: &vpp.Ikev2Profile_Auth{
+			Method: 2,
+			Hex:    false,
+			Data:   []byte("Vpp123"),
+		},
+		Id:               []*vpp.Ikev2Profile_EndId{pr1_localid, pr1_remoteid},
+		TrafficSelector:  []*vpp.Ikev2Profile_TrafficSelector{pr1_localts, pr1_remotets},
+		LifeTime:         3600,
+		LifeTimeMaxdata:  7200,
+		LifeTimeJitter:   60,
+		Handover:         60,
+		IpsecOverUdpport: 0,
+		TunnelInterface:  "ipip0",
+		DisableNatt:      false,
+		UdpEncap:         false,
+	}
+
+	pr1_localid = &vpp.Ikev2Profile_EndId{
+		Type:    vpp_ikev2.IDType_ID_FQDN,
+		IsLocal: true,
+		Data:    "pr1.vpp.home",
+	}
+
+	pr1_remoteid = &vpp.Ikev2Profile_EndId{
+		Type:    vpp_ikev2.IDType_ID_FQDN,
+		IsLocal: false,
+		Data:    "pr1.roadwarrior.vpn.example.com",
+	}
+
+	pr1_localts = &vpp.Ikev2Profile_TrafficSelector{
+		SaIndex:      0,
+		ChildSaIndex: 0,
+		Protocol:     0,
+		IsLocal:      true,
+		StartPort:    0,
+		EndPort:      65535,
+		StartAddr:    "0.0.0.0",
+		EndAddr:      "255.255.255.255",
+	}
+
+	pr1_remotets = &vpp.Ikev2Profile_TrafficSelector{
+		SaIndex:      0,
+		ChildSaIndex: 0,
+		Protocol:     0,
+		IsLocal:      false,
+		StartPort:    0,
+		EndPort:      65535,
+		StartAddr:    "0.0.0.0",
+		EndAddr:      "255.255.255.255",
 	}
 )
 
